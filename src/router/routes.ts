@@ -111,7 +111,7 @@ const accessRoutes = [
     meta: {
       title: setTitle("Roles y Permisos"),
       authRequired: true,
-      permission: 'all',
+      permission: 'list_role',
     },
     component: () => import("@/views/roles/index.vue"),
   },
@@ -121,9 +121,32 @@ const accessRoutes = [
     meta: {
       title: setTitle("Usuarios"),
       authRequired: true,
-      permission: 'all',
+      permission: 'list_user',
     },
     component: () => import("@/views/users/index.vue"),
+  },
+];
+
+const comercialRoutes = [
+  {
+    path: "/categories",
+    name: "categories.index",
+    meta: {
+      title: setTitle("Categorias"),
+      authRequired: true,
+      permission: 'list_categorie',
+    },
+    component: () => import("@/views/categories/index.vue"),
+  },
+  {
+    path: "/company",
+    name: "company.index",
+    meta: {
+      title: setTitle("Datos de la Empresa"),
+      authRequired: true,
+      permission: 'all',
+    },
+    component: () => import("@/views/company/index.vue"),
   },
 ];
 
@@ -132,4 +155,5 @@ export const allRoute = [
   ...errorRoutes,
   ...dashboardRoutes,
   ...accessRoutes,
+  ...comercialRoutes,
 ];
