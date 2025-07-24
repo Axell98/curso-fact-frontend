@@ -14,16 +14,16 @@ const authRoutes = [
     },
     component: () => import("@/views/auth/login.vue"),
   },
-  {
-    path: "/products",
-    name: "products",
-    meta: {
-      title: setTitle("Productos"),
-      authRequired: true,
-      permission: 'all',
-    },
-    component: () => import("@/views/products.vue"),
-  },
+  // {
+  //   path: "/products",
+  //   name: "products",
+  //   meta: {
+  //     title: setTitle("Productos"),
+  //     authRequired: true,
+  //     permission: 'all',
+  //   },
+  //   component: () => import("@/views/products.vue"),
+  // },
   // {
     //   path: "/auth/register",
     //   name: "auth.register",
@@ -147,6 +147,46 @@ const comercialRoutes = [
       permission: 'all',
     },
     component: () => import("@/views/company/index.vue"),
+  },
+  {
+    path: "/product/register",
+    name: "product.register",
+    meta: {
+      title: setTitle("Registrar Producto"),
+      authRequired: true,
+      permission: 'register_product',
+    },
+    component: () => import("@/views/product/register.vue"),
+  },
+  {
+    path: "/products",
+    name: "product.list",
+    meta: {
+      title: setTitle("Listado de Productos"),
+      authRequired: true,
+      permission: 'list_product',
+    },
+    component: () => import("@/views/product/index.vue"),
+  },
+  {
+    path: "/product/edit/:id",
+    name: "product.edit",
+    meta: {
+      title: setTitle("Editar Producto"),
+      authRequired: true,
+      permission: 'edit_product',
+    },
+    component: () => import("@/views/product/edit.vue"),
+  },
+  {
+    path: "/clients",
+    name: "clients.index",
+    meta: {
+      title: setTitle("Clientes"),
+      authRequired: true,
+      permission: 'list_client',
+    },
+    component: () => import("@/views/clients/index.vue"),
   },
 ];
 

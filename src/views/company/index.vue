@@ -156,9 +156,9 @@
 import DefaultLayout from "@/layouts/DefaultLayout.vue";
 import type { Company, CompanyResponse, UbigeoClient } from "@/types/company";
 import { onMounted, ref, watch } from "vue";
-import REGIONES from '../clients/regiones.json';
-import PROVINCIAS from '../clients/provincias.json';
-import DISTRITOS from '../clients/distritos.json';
+import REGIONES from '../clients/json/regiones.json';
+import PROVINCIAS from '../clients/json/provincias.json';
+import DISTRITOS from '../clients/json/distritos.json';
 import type { AxiosResponse } from "axios";
 import HttpClient from "@/helpers/http-client";
 import Swal from "sweetalert2/dist/sweetalert2.js";
