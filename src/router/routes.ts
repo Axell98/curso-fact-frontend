@@ -188,6 +188,16 @@ const comercialRoutes = [
     },
     component: () => import("@/views/clients/index.vue"),
   },
+  {
+    path: "/sale/register",
+    name: "sale.register",
+    meta: {
+      title: setTitle("Registrar Venta"),
+      authRequired: true,
+      permission: 'register_sale',
+    },
+    component: () => import("@/views/sale/register.vue"),
+  },
 ];
 
 export const allRoute = [

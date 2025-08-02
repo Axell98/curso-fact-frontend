@@ -91,7 +91,7 @@ export const MENU_ITEMS: MenuItemType[] = [
       {
         key: "register_sale",
         label: "Registrar",
-        route: { name: "dashboards.ecommerce" },
+        route: { name: "sale.register" },
         parentKey: "sales",
         permission: 'register_sale',
       },

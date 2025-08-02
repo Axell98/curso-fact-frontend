@@ -8,13 +8,11 @@
                             <b-col lg="3">
                                 <b-card-title>💁 Clientes / 🏤 Empresas</b-card-title>
                             </b-col>
-                            <b-col lg="2">
+                            <b-col lg="5" class="d-flex">
                                 <b-button type="button" variant="success" @click="ModalRegisterClientFinal = !ModalRegisterClientFinal">
                                     <i class="far fa-plus-square ml-3"></i> Registrar Cliente Final
                                 </b-button>
-                            </b-col>
-                            <b-col lg="2">
-                                <b-button type="button" variant="success" @click="ModalRegisterClientEmpresa = !ModalRegisterClientEmpresa">
+                                <b-button class="mx-2" type="button" variant="success" @click="ModalRegisterClientEmpresa = !ModalRegisterClientEmpresa">
                                     <i class="far fa-plus-square ml-3"></i> Registrar Cliente Empresa
                                 </b-button>
                             </b-col>
@@ -56,22 +54,22 @@
                             <b-tbody>
                                 <b-tr v-for="(client, index) in clients" :key="index">
                                     <b-td>
-                                        
+                                        {{ client.full_name }}
                                     </b-td>
                                     <b-td>
-                                        
+                                        {{ client.type_client == 1 ? 'CLIENTE FINAL' : 'CLIENTE EMPRESA' }}
                                     </b-td>
                                     <b-td>
-                                        
+                                        {{ client.phone }}
                                     </b-td>
                                     <b-td>
-                                        
+                                        {{ client.type_document }}
                                     </b-td>
                                     <b-td>
-                                        
+                                        {{ client.n_document }}
                                     </b-td>
                                     <b-td>
-                                        
+                                        {{ client.region+ "/"+client.provincia+"/"+client.distrito }}
                                     </b-td>
                                     <b-td>
                                         <b-badge variant="primary" v-if="client.state == 1">Activo</b-badge>
@@ -252,7 +250,7 @@
         </b-modal>
         <b-modal
             v-model="ModalRegisterClientEmpresa"
-            :title="`🔏 ${client_selected ? 'Edición' : 'Registro'}  de Cliente Empresa`"
+            :title="`🔏 ${client_selected ? 'Edición' : 'Registro'}  de Cliente Empresa `"
             :header-class="`bg-${themeColor}`"
             title-class="m-0 text-white"
             :ok-variant="themeColor"
@@ -424,6 +422,7 @@ const ubigeo_region = ref<string>("");
 const ubigeo_provincia = ref<string>("");
 const ubigeo_distrito = ref<string>("");
 const state = ref<number>(1);
+const type_client = ref<string>("1");//1 ES CLIENTE FINAL Y 2 CLIENTE EMPRESA
 
 const client_selected = ref<Client | undefined>(undefined);
 
@@ -450,17 +449,133 @@ const list = async() => {
 const store = async () => {
     try {
         
-        if(!name.value){
+        if(type_client.value == "1"){//CLIENTE TIPO NATURAL O FINAL
+            if(!name.value){
+                (Swal as TVueSwalInstance).fire(
+                    "Upps!",
+                    "Necesitas ingresar un nombre para el cliente",
+                    "error",
+                );
+                return;
+            }
+            if(!surname.value){
+                (Swal as TVueSwalInstance).fire(
+                    "Upps!",
+                    "El campo apellido es obligatorio",
+                    "error",
+                );
+                return;
+            }
+        }else{
+            if(!full_name.value){
+                (Swal as TVueSwalInstance).fire(
+                    "Upps!",
+                    "El campo razon social es obligatorio",
+                    "error",
+                );
+                return;
+            }
+        }
+
+        if(!email.value){
             (Swal as TVueSwalInstance).fire(
                 "Upps!",
-                "Necesitas ingresar un nombre para el usuario",
+                "El campo email es obligatorio",
+                "error",
+            );
+            return;
+        }
+        if(!phone.value){
+            (Swal as TVueSwalInstance).fire(
+                "Upps!",
+                "El campo telefono es obligatorio",
+                "error",
+            );
+            return;
+        }
+        if(!n_document.value){
+            (Swal as TVueSwalInstance).fire(
+                "Upps!",
+                "El campo numero de documento es obligatorio",
+                "error",
+            );
+            return;
+        }
+        if(!birth_date.value){
+            (Swal as TVueSwalInstance).fire(
+                "Upps!",
+                "Necesitas seleccionar una fecha para el cliente",
+                "error",
+            );
+            return;
+        }
+        if(!address.value){
+            (Swal as TVueSwalInstance).fire(
+                "Upps!",
+                "Necesitas una dirección para el cliente",
+                "error",
+            );
+            return;
+        }
+        if(!ubigeo_region.value){
+            (Swal as TVueSwalInstance).fire(
+                "Upps!",
+                "Necesitas una región para el cliente",
+                "error",
+            );
+            return;
+        }
+        if(!ubigeo_provincia.value){
+            (Swal as TVueSwalInstance).fire(
+                "Upps!",
+                "Necesitas una provincia para el cliente",
+                "error",
+            );
+            return;
+        }
+        if(!ubigeo_distrito.value){
+            (Swal as TVueSwalInstance).fire(
+                "Upps!",
+                "Necesitas un distrito para el cliente",
                 "error",
             );
             return;
         }
 
+        let region = "";
+        let provincia = "";
+        let distrito = "";
+        let REGION_S = REGIONES_L.value.find((ubgr) => ubgr.id == ubigeo_region.value);
+        if(REGION_S){
+            region = REGION_S.name;
+        }
+        let PROVINCIA_S = PROVINCIAS_L.value.find((ubgp) => ubgp.id == ubigeo_provincia.value);
+        if(PROVINCIA_S){
+            provincia = PROVINCIA_S.name;
+        }
+        let DISTRITO_S = DISTRITOS_L.value.find((ubgd) => ubgd.id == ubigeo_distrito.value);
+        if(DISTRITO_S){
+            distrito = DISTRITO_S.name;
+        }
         let data = {
-
+            name:name.value,
+            surname: surname.value,
+            full_name: type_client.value == '1' ? name.value + " " +surname.value : full_name.value,
+            email:email.value,
+            phone: phone.value,
+            n_document: n_document.value,
+            type_document: type_document.value,
+            address: address.value,
+            birth_date: birth_date.value,
+            ubigeo_region: ubigeo_region.value,
+            ubigeo_provincia: ubigeo_provincia.value,
+            ubigeo_distrito: ubigeo_distrito.value,
+            region: region,
+            provincia: provincia,
+            distrito: distrito,
+            type_client:type_client.value,
+            state: state.value,
+            gender:gender.value,
         }
        
         const res: AxiosResponse<ClientResponse> = 
@@ -479,7 +594,8 @@ const store = async () => {
                 "error",
             );
         }else{
-            ModalRegisterClientFinal.value = false;
+            ModalRegisterClientFinal.value = false
+            ModalRegisterClientEmpresa.value = false
             if(!client_selected.value){
                 if(res.data.client){
                     clients.value.unshift(res.data.client);
@@ -516,11 +632,36 @@ const store = async () => {
 
 const editClient = (client:Client) => {
 
-    ModalRegisterClientFinal.value = true;
     client_selected.value = client;
+    if(client_selected.value.type_client == 1){
+        ModalRegisterClientFinal.value = true;
+        name.value = client_selected.value.name;
+        surname.value = client_selected.value.surname ?? '';
+    }else{
+        ModalRegisterClientEmpresa.value = true;
+        full_name.value = client_selected.value.full_name;
+    }
 
-    // name.value = client_selected.value.name;
-    // state.value = client.state;
+    email.value = client.email;
+    phone.value = client.phone+"";
+    state.value = client.state;
+
+    ubigeo_region.value = client.ubigeo_region;
+    setTimeout(() => {
+        ubigeo_provincia.value = client.ubigeo_provincia;
+        setTimeout(() => {
+            ubigeo_distrito.value = client.ubigeo_distrito;
+        }, 25);
+    }, 25);
+
+    address.value = client.address;
+    type_client.value = client.type_client+"";
+    birth_date.value = client.birth_date ?? '';
+
+    type_document.value = client.type_document ?? '';
+    n_document.value = Number(client.n_document);
+    gender.value = client.gender;
+    state.value = client.state;
 }
 const deleteClient = (client:Client) => {
     try {
@@ -558,7 +699,20 @@ const deleteClient = (client:Client) => {
 
 const clearField = () => {
     name.value = '';
+    surname.value = '';
+    full_name.value = "";
+    email.value = '';
+    phone.value = "";
     state.value = 1;
+    type_client.value = "1";
+    birth_date.value = "";
+    address.value = "";
+    ubigeo_distrito.value = "";
+    ubigeo_provincia.value = "";
+    ubigeo_region.value = "";
+    type_document.value = '';
+    n_document.value = 0;
+    gender.value = '';
     state.value = 1;
 }
 
@@ -586,6 +740,18 @@ watch(ModalRegisterClientFinal,(value) => {
     if(value == false){
         client_selected.value = undefined;
         clearField();
+    }
+    if(value == true){
+        type_client.value = "1";//CLIENTE FINAL
+    }
+})
+watch(ModalRegisterClientEmpresa,(value) => {
+    if(value == false){
+        client_selected.value = undefined;
+        clearField();
+    }
+    if(value == true){
+        type_client.value = "2";//CLIENTE EMPRESA
     }
 })
 watch(currentPage,(value) => {
