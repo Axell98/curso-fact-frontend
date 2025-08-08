@@ -87,14 +87,14 @@
 
                     <b-col lg="3" md="3">
                         <label for="is_icbper-product" class="col-form-label text-lg-end">Bolsa de Plastico: </label>
-                        <b-form-radio name="is_icbper" @click="is_icbper = 0" value="0" :checked="is_icbper == 0">No</b-form-radio>
-                        <b-form-radio name="is_icbper" @click="is_icbper = 1" value="1" :checked="is_icbper == 1">Si</b-form-radio>
+                        <b-form-radio name="is_icbper" @click="is_icbper = 1" value="1" :checked="is_icbper == 1">No</b-form-radio>
+                        <b-form-radio name="is_icbper" @click="is_icbper = 2" value="2" :checked="is_icbper == 2">Si</b-form-radio>
                     </b-col>
 
                     <b-col lg="3" md="3">
                         <label for="is_ivap-product" class="col-form-label text-lg-end">Arroz Pilado: </label>
-                        <b-form-radio name="is_ivap" @click="is_ivap = 0" value="0" :checked="is_ivap == 0">No</b-form-radio>
-                        <b-form-radio name="is_ivap" @click="is_ivap = 1" value="1" :checked="is_ivap == 1">Si</b-form-radio>
+                        <b-form-radio name="is_ivap" @click="is_ivap = 1" value="1" :checked="is_ivap == 1">No</b-form-radio>
+                        <b-form-radio name="is_ivap" @click="is_ivap = 2" value="2" :checked="is_ivap == 2">Si</b-form-radio>
                     </b-col>
 
                     <b-col lg="2" md="3">
@@ -198,8 +198,8 @@ const description = ref<string>("");
 const is_discount = ref<number>(1);
 const max_discount = ref<number>(0);
 const disponiblidad = ref<number>(1);
-const is_icbper = ref<number>(0);
-const is_ivap = ref<number>(0);
+const is_icbper = ref<number>(1);
+const is_ivap = ref<number>(1);
 const is_isc = ref<number>(0);
 const percentage_isc = ref<number>(0);
 const is_especial_nota = ref<number>(0);
