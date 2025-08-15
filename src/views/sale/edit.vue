@@ -3,7 +3,7 @@
         <div class="d-flex flex-wrap justify-space-between gap-4 mb-6">
             <div class="d-flex flex-column justify-center">
                 <h4 class="text-h4 mb-1">
-                    💰 Add New Sale/Cotización
+                    💰 Edit Sale/Cotización : #{{ sale_id }}
                 </h4>
                 <p class="text-body-1 mb-0">
                     Orders placed across your store
@@ -55,6 +55,7 @@
                             type="text"
                             id="n-transaction"
                             v-model="n_transaction"
+                            disabled
                             placeholder="000000"
                         />
                     </b-col>
@@ -63,6 +64,7 @@
                         <b-form-input
                             type="date"
                             id="n-f-emision"
+                            disabled
                             v-model="today"
                         />
                     </b-col>
@@ -412,7 +414,7 @@
                     </b-col>
                     <b-col lg="3" md="3" class="text-end">
                         <b-button type="button" variant="primary" @click="store()">
-                            <i class="far fa-plus-square ml-3"></i> Guardar {{ state_sale == 1 ? 'Venta' : 'Cotización' }}
+                            <i class="far fa-plus-square ml-3"></i> Editar {{ state_sale == 1 ? 'Venta' : 'Cotización' }}
                         </b-button>
                     </b-col>
                 </b-row>
@@ -429,7 +431,7 @@ import type { AxiosResponse } from "axios";
 import Swal from "sweetalert2/dist/sweetalert2.js";
 type TVueSwalInstance = typeof Swal & typeof Swal.fire;
 import HttpClient from "@/helpers/http-client";
-import type { SaleConfig, SaleDetail, SalePayment, SaleResponse } from "@/types/sales";
+import type { Sale, SaleConfig, SaleDetail, SalePayment, SaleResponse } from "@/types/sales";
 import Selectr from "mobius1-selectr";
 
 const state_sale = ref<number>(1);
@@ -478,6 +480,11 @@ const total_detracion = ref<number>(0);
 const total_percepcion = ref<number>(0);
 const total_payments = ref<number>(0);
 
+import { useRoute } from "vue-router";
+const route = useRoute("sale.edit");
+const sale_id = ref<string | string[]>("");
+const sale_selected = ref<Sale | undefined>(undefined);
+
 const getPriceBaseCF = () => {
     if(product_selected.value){
         if(product_selected.value.include_igv == 1){
@@ -514,8 +521,8 @@ const config = async() => {
        const res: AxiosResponse<SaleConfig> = await HttpClient.get(
         `sales/config`);
       console.log(res);
-        n_transaction.value = res.data.n_transaction;
-        today.value = res.data.today;
+        // n_transaction.value = res.data.n_transaction;
+        // today.value = res.data.today;
 
         if(clients.value.length == 0){
             clients.value = res.data.clients.data;
@@ -523,6 +530,8 @@ const config = async() => {
             setTimeout(() => {
                 clientSelectr.value = new Selectr("#n-f-clients");
                 productSelectr.value = new Selectr("#n-f-products");
+
+                show();
             },25)
         }
         
@@ -622,9 +631,9 @@ const store = async() => {
             state_payment: STATE_PAYMENT,
             debt: getTotalSales() - total_payments.value,
             paid_out: total_payments.value,
-            sale_details: sale_details.value,
+            // sale_details: sale_details.value,
             type_payment: type_payment.value,
-            payments: sale_payments.value,
+            // payments: sale_payments.value,
 
             retencion_igv: retencion_igv.value,
             discount_global: discount_global.value,
@@ -636,7 +645,7 @@ const store = async() => {
             currency: currency.value,
         }
 
-        const resp: AxiosResponse<SaleResponse> = await HttpClient.post("sales",data);
+        const resp: AxiosResponse<SaleResponse> = await HttpClient.patch("sales/"+sale_id.value,data);
 
         console.log(resp);
 
@@ -657,8 +666,8 @@ const store = async() => {
             );
         }
 
-        resetData();
-        config();
+        // resetData();
+        // config();
     } catch (e:any) {
         if(e.response?.data){
             (Swal as TVueSwalInstance).fire(
@@ -747,6 +756,8 @@ const addProduct = () => {
 
 
     let PRICE_FINAL = Number(((SUBTOTAL + IGV + isc)/quantity.value).toFixed(5));
+
+    // 
 
     sale_details.value.unshift({
         product: product_selected.value,
@@ -957,7 +968,62 @@ const resetAnticipo = () => {
 
 } 
 
+const show = async() => {
+    try {
+        
+        const res: AxiosResponse<SaleResponse> = await HttpClient.get(
+        `sales/${sale_id.value}`);
+
+        console.log(res);
+
+        if(res.data.code == 405){
+            (Swal as TVueSwalInstance).fire(
+                "Upps!",
+                res.data.message,
+                "error",
+            );
+            return;
+        }
+
+        sale_selected.value = res.data.sale;
+
+        if(sale_selected.value){
+
+            client_selected.value = sale_selected.value.client;
+            
+            clientSelectr.value.setValue(sale_selected.value.client.id);
+            sale_details.value = sale_selected.value.sale_details;
+            sale_payments.value = sale_selected.value.payments;
+            type_payment.value = sale_selected.value.type_payment;
+            description.value = sale_selected.value.description;
+            state_sale.value = sale_selected.value.state_sale;
+
+            retencion_igv.value = sale_selected.value.retencion_igv;
+            discount_global.value = sale_selected.value.discount_global;
+            serie.value = sale_selected.value.serie;
+
+            is_exportacion.value = sale_selected.value.is_exportacion;
+            currency.value = sale_selected.value.currency;
+
+            today.value = sale_selected.value.created_at_format;
+            n_transaction.value = sale_selected.value.n_transaction;
+            // if(sale_selected.value.sales_anticipos){
+            //     sales_anticipos.value = sale_selected.value.sales_anticipos;
+            //     is_anticipo.value = 1;
+            // }
+            setTimeout(() => {
+                sumDetails();
+            }, 25);
+        }
+
+
+    } catch (error) {
+        console.log(error);
+    }
+}
+
 onMounted(() => {
+    sale_id.value = route.params.id;
     config();
 })
 </script>

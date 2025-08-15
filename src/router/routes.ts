@@ -198,6 +198,26 @@ const comercialRoutes = [
     },
     component: () => import("@/views/sale/register.vue"),
   },
+  {
+    path: "/sale/list",
+    name: "sale.list",
+    meta: {
+      title: setTitle("Listar Ventas"),
+      authRequired: true,
+      permission: 'list_sale',
+    },
+    component: () => import("@/views/sale/index.vue"),
+  },
+  {
+    path: "/sale/edit/:id",
+    name: "sale.edit",
+    meta: {
+      title: setTitle("Editar Venta"),
+      authRequired: true,
+      permission: 'edit_sale',
+    },
+    component: () => import("@/views/sale/edit.vue"),
+  },
 ];
 
 export const allRoute = [

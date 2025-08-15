@@ -50,10 +50,10 @@ export type SaleDetailResponse = {
 }
 
 export type SalePayment = {
-    id:string,
+    id?:string,
     method_payment:string,
     amount:number,
-    date_payment:string,
+    date_payment:string | Date,
 }
 export type Sale = {
     id:string,
@@ -63,10 +63,7 @@ export type Sale = {
         full_name:string,
     },
     client_id:string,
-    client:{
-        id:string,
-        full_name:string,
-    },
+    client:Client,
     n_document:string,
     correlativo:string,
     n_operacion:string,
@@ -118,4 +115,5 @@ export type SaleResponse = {
     message:string | number,
     code?:number,
     sale?: Sale,
+    error:any,
 }

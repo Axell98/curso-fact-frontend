@@ -52,4 +52,7 @@ declare module 'vue' {
     RouterView: typeof import('vue-router')['RouterView']
     UIComponentCard: typeof import('./src/components/UIComponentCard.vue')['default']
   }
+  export interface ComponentCustomProperties {
+    vBTooltip: typeof import('bootstrap-vue-next')['vBTooltip']
+  }
 }

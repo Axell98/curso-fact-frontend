@@ -166,9 +166,10 @@ const handleLogin = async () => {
 };
 
 const redirectUser = () => {
-  if (query.redirectedFrom) {
-    return router.push(`${query.redirectedFrom}`);
-  }
-  return router.push("/");
+  // if (query.redirectedFrom) {
+  //   return router.push(`${query.redirectedFrom}`);
+  // }
+  // return router.push("/");
+  window.location.reload();
 };
 </script>
