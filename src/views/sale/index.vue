@@ -196,7 +196,7 @@
 <script setup lang="ts">
 import DefaultLayout from "@/layouts/DefaultLayout.vue";
 import { ProductCategorie, type ProductConfigResponse } from "@/types/products";
-import type { Sale, Sales } from "@/types/sales";
+import type { Sale, SaleResponse, Sales } from "@/types/sales";
 import { onMounted, ref, watch } from "vue";
 import HttpClient from "@/helpers/http-client";
 import sunatLg from "@/assets/images/sunat-logo.png"
@@ -300,8 +300,38 @@ const editSale = (sale: Sale) => {
         }
     });
 }
-const deleteSale = (sale: Sale) => {
-
+const deleteSale = async (sale: Sale) => {
+    try {
+        (Swal as TVueSwalInstance)
+            .fire({
+            title: "Confirmar la eliminación",
+            text: `¿Estas seguro de eliminar esta ventas '${sale.id}'' ?`,
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#3085d6",
+            cancelButtonColor: "#d33",
+            confirmButtonText: "Si, eliminalo!",
+        })
+            .then(async (result: any) => {
+                if (result.isConfirmed) {
+                    const res: AxiosResponse<SaleResponse> = await HttpClient.delete(
+                        "sales/"+sale.id
+                    );
+                    console.log(res);
+                    (Swal as TVueSwalInstance).fire(
+                        "Eliminado!",
+                        "La venta '"+sale.id+"'"+"se ha sido eliminado",
+                        "success",
+                    );
+                    let INDEX = sale_list.value.findIndex(ctg => ctg.id == sale.id);
+                    if(INDEX != -1){
+                        sale_list.value.splice(INDEX,1);
+                    }
+                }
+        });
+    } catch (error) {
+        console.log(error);
+    }
 }
 const seendSunat = (sale: Sale) => {
 }

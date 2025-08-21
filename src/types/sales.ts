@@ -39,7 +39,7 @@ export type SaleDetail = {
 }
 
 export type SaleDetailResponse = {
-    detail: SaleDetail,
+    sale_detail: SaleDetail,
     discount:number,
     igv:number,
     subtotal:number,

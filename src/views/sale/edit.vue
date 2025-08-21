@@ -324,6 +324,11 @@
                                 <td>Total</td>
                                 <td>{{ currency }} {{ getTotalSales() }}</td>
                             </tr>
+
+                            <tr v-if="total_payments > 0">
+                                <td>Total Pago</td>
+                                <td>{{ currency }} {{ total_payments }}</td>
+                            </tr>
                             
                         </table>
                     </b-col>
@@ -431,7 +436,7 @@ import type { AxiosResponse } from "axios";
 import Swal from "sweetalert2/dist/sweetalert2.js";
 type TVueSwalInstance = typeof Swal & typeof Swal.fire;
 import HttpClient from "@/helpers/http-client";
-import type { Sale, SaleConfig, SaleDetail, SalePayment, SaleResponse } from "@/types/sales";
+import type { Sale, SaleConfig, SaleDetail, SaleDetailResponse, SalePayment, SaleResponse } from "@/types/sales";
 import Selectr from "mobius1-selectr";
 
 const state_sale = ref<number>(1);
@@ -610,6 +615,23 @@ const store = async() => {
             return;
         }
 
+        if(state_sale.value == 1 && sale_payments.value.length == 0 && getTotalSales() > 0){
+            (Swal as TVueSwalInstance).fire(
+                "Upps!",
+                "Necesitas agregar un pago a la venta",
+                "error",
+            );
+            return;
+        }
+        if(sale_payments.value.length > 0 && getTotalSales() != total_payments.value){
+            (Swal as TVueSwalInstance).fire(
+                "Upps!",
+                "Necesitas eliminar el pago para poder continuar con la edición",
+                "error",
+            );
+            return;
+        }
+
         let STATE_PAYMENT = 1;//PENDIENTE
         if(state_sale.value == 1){
             if(total_payments.value != getTotalSales()){
@@ -706,7 +728,7 @@ const resetData = () => {
     igv_discount_general.value = 0;
 }
 
-const addProduct = () => {
+const addProduct = async () => {
 
     if(!product_selected.value){
         (Swal as TVueSwalInstance).fire(
@@ -757,9 +779,8 @@ const addProduct = () => {
 
     let PRICE_FINAL = Number(((SUBTOTAL + IGV + isc)/quantity.value).toFixed(5));
 
-    // 
-
-    sale_details.value.unshift({
+    let data = {
+        sale_id:sale_selected.value?.id,
         product: product_selected.value,
         unidad_medida: product_selected.value.unidad_medida,
         price_base: price_base.value,
@@ -774,14 +795,67 @@ const addProduct = () => {
         tip_afe_igv:type_operation.value,
         percentage_isc:per_isc,
         isc:isc,
-    });
-    console.log(sale_details.value);
-    sumDetails();
-    resetDataItem();
+    }
+    try {
+        // 
+        const resp: AxiosResponse<SaleDetailResponse> = await HttpClient.post("sale_details/",data);
+        // 
+        console.log(resp.data);
+        sale_details.value.unshift(resp.data.sale_detail);
+        sumDetails();
+        resetDataItem();
+        
+    } catch (error:any) {
+        console.log(error);
+        if(error.response?.data){
+            (Swal as TVueSwalInstance).fire(
+                "Upps!",
+                error.response?.data.message,
+                "error",
+            );
+            return;
+        }
+    }
 }
-const deleteSaleDetail = (index:number) => {
-    sale_details.value.splice(index,1);
-    sumDetails();
+const deleteSaleDetail = async (index:number) => {
+    let SALE_DETAIL = sale_details.value[index];
+    if(sale_details.value.length == 1){
+        (Swal as TVueSwalInstance).fire(
+            "Upps!",
+            "No puedes eliminar el ultimo producto vigente",
+            "error",
+        );
+        return;
+    }
+    try {
+        (Swal as TVueSwalInstance)
+            .fire({
+            title: "Confirmar la eliminación",
+            text: `¿Estas seguro de eliminar este producto '${SALE_DETAIL.product.title}'' ?`,
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#3085d6",
+            cancelButtonColor: "#d33",
+            confirmButtonText: "Si, eliminalo!",
+        })
+            .then(async (result: any) => {
+                if (result.isConfirmed) {
+                    const res: AxiosResponse<SaleDetailResponse> = await HttpClient.delete("sale_details/"+SALE_DETAIL.id);
+
+                    console.log(res);
+                    (Swal as TVueSwalInstance).fire(
+                        "Eliminado!",
+                        "El producto '"+SALE_DETAIL.product.title+"'"+"se ha sido eliminado",
+                        "success",
+                    );
+                    
+                    sale_details.value.splice(index,1);
+                    sumDetails();
+                }
+        });
+    } catch (error) {
+        console.log(error);
+    }
 }
 
 const resetDataItem = () => {
@@ -805,7 +879,9 @@ const getTotalSales = () => {
     return Number(((sale_total.value + icbper_total.value + isc_total.value + total_percepcion.value) - 
     (discount_global.value + igv_discount_global.value + total_retencion.value + total_detracion.value)).toFixed(5));
 }
-
+const getTotalCalc = () => {
+    return Number(((sale_total.value + icbper_total.value + isc_total.value) - (discount_global.value + igv_discount_global.value)).toFixed(5));
+}
 const sumDetails = () => {
 
     console.log(sale_details.value);
@@ -841,15 +917,15 @@ const sumDetails = () => {
     total_percepcion.value = 0;
     switch (retencion_igv.value) {
         case 1://RETENCION
-            total_retencion.value = Number((sale_total.value * 0.03).toFixed(5));
+            total_retencion.value = Number((getTotalCalc() * 0.03).toFixed(5));
             break;
 
         case 2://DETRACCION
-            total_detracion.value = Number((sale_total.value * 0.04).toFixed(5));
+            total_detracion.value = Number((getTotalCalc() * 0.04).toFixed(5));
             break;
 
         case 3://PERCEPCION
-            total_percepcion.value = Number((sale_total.value * 0.04).toFixed(5));
+            total_percepcion.value = Number((getTotalCalc() * 0.04).toFixed(5));
             break;
     
         default:
@@ -861,7 +937,17 @@ watch(retencion_igv,(value) => {
     sumDetails();
 })
 watch(type_payment,(value) => {
-    sale_payments.value = [];
+    // sale_payments.value = [];
+    if(sale_payments.value.length > 0){
+        (Swal as TVueSwalInstance).fire(
+            "Upps!",
+            "SI VAS A CAMBIAR DE TIPO DE PAGO, NO DEBES TENER NINGUN PAGO REGISTRADO",
+            "error",
+        );
+        setTimeout(() => {
+            type_payment.value = sale_selected.value?.type_payment ?? 1;
+        }, 50);
+    }
     setTimeout(() => {
         method_payment.value = "";
         amount.value = 0;
@@ -879,7 +965,7 @@ watch(is_exportacion,(value) => {
     sumDetails();
     discount_global.value = 0;
 })
-const addPayment = () => {
+const addPayment = async () => {
     
     if(!method_payment.value){
         (Swal as TVueSwalInstance).fire(
@@ -942,23 +1028,79 @@ const addPayment = () => {
         return;
     }
 
-    sale_payments.value.push({
+    let data = {
+        sale_id: sale_selected.value?.id,
         method_payment: method_payment.value,
         amount: amount.value,
-        date_payment: date_payment.value
-    });
+        date_payment: date_payment.value,
+        type_payment: type_payment.value,
+    }
+    try {
+        
+        const resp: AxiosResponse<any> = await HttpClient.post("sale_payments/",data);
+        
+        console.log(resp);
+        sale_payments.value.push(resp.data.payment);
+        
+        setTimeout(() => {
+            method_payment.value = "";
+            amount.value = 0;
+            date_payment.value = "";
+            sumDetails();
+            if(sale_selected.value){
+                sale_selected.value.type_payment = type_payment.value;
+            }
+        }, 50);
+
+    } catch (error:any) {
+        console.log(error);
+        if(error.response?.data){
+            (Swal as TVueSwalInstance).fire(
+                "Upps!",
+                error.response?.data.message,
+                "error",
+            );
+            return;
+        }
+    }
     
-    setTimeout(() => {
-        method_payment.value = "";
-        amount.value = 0;
-        date_payment.value = "";
-        sumDetails();
-    }, 50);
 }
 
 const removePayment = (index:number) => {
-    sale_payments.value.splice(index,1);
-    sumDetails();
+    
+    let SALE_PAYMENT = sale_payments.value[index];
+
+    try {
+        (Swal as TVueSwalInstance)
+            .fire({
+            title: "Confirmar la eliminación",
+            text: `¿Estas seguro de eliminar este pago '${SALE_PAYMENT.method_payment}'' ?`,
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#3085d6",
+            cancelButtonColor: "#d33",
+            confirmButtonText: "Si, eliminalo!",
+        })
+            .then(async (result: any) => {
+                if (result.isConfirmed) {
+                    const res: AxiosResponse<any> = await HttpClient.delete("sale_payments/"+SALE_PAYMENT.id);
+
+                    console.log(res);
+                    (Swal as TVueSwalInstance).fire(
+                        "Eliminado!",
+                        "El pago '"+SALE_PAYMENT.method_payment+"'"+"se ha sido eliminado",
+                        "success",
+                    );
+                    
+                    sale_payments.value.splice(index,1);
+                    sumDetails();
+                }
+        });
+    } catch (error) {
+        console.log(error);
+    }
+
+    
 }
 
 const searchAnticipo = async() => {
@@ -993,7 +1135,9 @@ const show = async() => {
             
             clientSelectr.value.setValue(sale_selected.value.client.id);
             sale_details.value = sale_selected.value.sale_details;
-            sale_payments.value = sale_selected.value.payments;
+            setTimeout(() => {
+                sale_payments.value = sale_selected.value ? sale_selected.value.payments : [];
+            }, 50);
             type_payment.value = sale_selected.value.type_payment;
             description.value = sale_selected.value.description;
             state_sale.value = sale_selected.value.state_sale;

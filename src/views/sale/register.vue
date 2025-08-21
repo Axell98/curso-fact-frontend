@@ -794,7 +794,9 @@ const getTotalSales = () => {
     return Number(((sale_total.value + icbper_total.value + isc_total.value + total_percepcion.value) - 
     (discount_global.value + igv_discount_global.value + total_retencion.value + total_detracion.value)).toFixed(5));
 }
-
+const getTotalCalc = () => {
+    return Number(((sale_total.value + icbper_total.value + isc_total.value) - (discount_global.value + igv_discount_global.value)).toFixed(5));
+}
 const sumDetails = () => {
 
     console.log(sale_details.value);
@@ -830,15 +832,15 @@ const sumDetails = () => {
     total_percepcion.value = 0;
     switch (retencion_igv.value) {
         case 1://RETENCION
-            total_retencion.value = Number((sale_total.value * 0.03).toFixed(5));
+            total_retencion.value = Number((getTotalCalc() * 0.03).toFixed(5));
             break;
 
         case 2://DETRACCION
-            total_detracion.value = Number((sale_total.value * 0.04).toFixed(5));
+            total_detracion.value = Number((getTotalCalc() * 0.04).toFixed(5));
             break;
 
         case 3://PERCEPCION
-            total_percepcion.value = Number((sale_total.value * 0.04).toFixed(5));
+            total_percepcion.value = Number((getTotalCalc() * 0.04).toFixed(5));
             break;
     
         default:
