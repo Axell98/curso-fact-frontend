@@ -333,9 +333,57 @@ const deleteSale = async (sale: Sale) => {
         console.log(error);
     }
 }
-const seendSunat = (sale: Sale) => {
+const seendSunat = async (sale: Sale) => {
+    try {
+
+        let data = {
+            sale_id: sale.id,
+        }
+
+        const res: AxiosResponse<any> = await HttpClient.post("seend_sunat",data);
+
+        console.log(res);
+
+        if(res.data.response.error){
+            (Swal as TVueSwalInstance).fire(
+                "Upps!",
+                `(${res.data.response.error.code}) ${res.data.response.error.message}`,
+                "error",
+            );
+            return;
+        }
+
+        if(res.data.sale){
+            let INDEX = sale_list.value.findIndex((sale) => sale.id == res.data.sale.id);
+            if(INDEX != -1){
+                sale_list.value[INDEX] = res.data.sale;
+                (Swal as TVueSwalInstance).fire(
+                    "Genial!",
+                    "Tu venta ha sido reportada a SUNAT, podras tener la constancia del XML y del CDR",
+                    "success",
+                );
+            }
+        }
+
+    } catch (error:any) {
+        console.log(error);
+        if(error.response?.data){
+            (Swal as TVueSwalInstance).fire(
+                "Upps!",
+                error.response?.data.message,
+                "error",
+            );
+            return;
+        }
+    }
 }
 const notaSale= (sale: Sale) => {
+    router.push({
+        name:'sale.nota',
+        params:{
+            id: sale.id,
+        }
+    })
 }
 
 watch(currentPage,(value) => {

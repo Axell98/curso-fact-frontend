@@ -113,10 +113,36 @@
                                 />
                             </div>
                             <div v-if="sale_anticipo">
-                                <b-button type="button" class="rounded-pill btn btn-info" @click="resetAnticipo()">
+                                <!-- <b-button type="button" class="rounded-pill btn btn-info" @click="resetAnticipo()">
                                     <i class="fas fa-window-close ml-3"></i>
+                                </b-button> -->
+                                <b-button type="button" class="rounded-pill btn btn-info" @click="addAnticipo()">
+                                <i class="far fa-plus-square ml-3"></i>
+                                </b-button>
+                                <b-button type="button" class="rounded-pill btn btn-dark" @click="resetAnticipo()">
+                                    <i class="fas fa-sync ml-3"></i>
                                 </b-button>
                             </div>
+                        </div>
+                        <div class="table-responsive m-0" v-if="sales_anticipos.length > 0">
+                            <table>
+                                <thead class="table-light">
+                                    <th>ANTICIPOS</th>
+                                    <th></th>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="(sales_anticipo, index) in sales_anticipos" :key="index">
+                                        <td>
+                                            {{ sales_anticipo.n_operacion }}
+                                        </td>
+                                        <td>
+                                            <b-button type="button" class="rounded-pill btn btn-danger" @click="removeAnticipo(index)">
+                                                <i class="las la-trash-alt ml-3"></i>
+                                            </b-button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
                     </b-col>
                     <b-col lg="2">
@@ -295,6 +321,11 @@
                                 <td>{{ currency }} {{ isc_total }}</td>
                             </tr>
                             
+                            
+                            <tr v-if="total_anticipos > 0">
+                                <td>Total de Anticipos</td>
+                                <td>{{ currency }} {{ total_anticipos + igv_discount_general }}</td>
+                            </tr>
 
                             <tr>
                                 <td>Descuento</td>
@@ -464,6 +495,7 @@ const description = ref<string>("");
 // 
 const clientSelectr = ref<any>(null);
 const productSelectr = ref<any>(null);
+const sales_anticipos = ref<any[]>([]);
 
 const icbper_total = ref<number>(0);
 const isc_total = ref<number>(0);
@@ -472,11 +504,13 @@ const sale_total = ref<number>(0);
 const sale_subtotal = ref<number>(0);
 const igv_discount_global = ref<number>(0);
 const igv_discount_general = ref<number>(0);
+const discount_global_general = ref<number>(0);
 
 const total_retencion = ref<number>(0);
 const total_detracion = ref<number>(0);
 const total_percepcion = ref<number>(0);
 const total_payments = ref<number>(0);
+const total_anticipos = ref<number>(0);
 
 const getPriceBaseCF = () => {
     if(product_selected.value){
@@ -631,6 +665,9 @@ const store = async() => {
             description: description.value,
             serie: serie.value,
 
+            amount_anticipo: total_anticipos.value,
+            sales_anticipos: sales_anticipos.value,
+
             igv_discount_general: igv_discount_general.value,
             is_exportacion: is_exportacion.value,
             currency: currency.value,
@@ -695,6 +732,7 @@ const resetData = () => {
     n_comprobante_anticipo.value = "";
     sale_anticipo.value = 0;
     igv_discount_general.value = 0;
+    sales_anticipos.value = [];
 }
 
 const addProduct = () => {
@@ -726,7 +764,7 @@ const addProduct = () => {
 
     let DISCOUNT_TOTAL = discount.value * quantity.value;
     let SUBTOTAL = (price_base.value * quantity.value) - DISCOUNT_TOTAL;
-    let fac_icbper = product_selected.value.is_icbper == 2 ? 0.20 : 0; 
+    let fac_icbper = product_selected.value.is_icbper == 2 ? 0.50 : 0; 
     let per_isc = product_selected.value.percentage_isc;
 
     let PERCENTAGE_IGV = 0.18;
@@ -783,19 +821,19 @@ const resetDataItem = () => {
 }
 
 const getIgvTotal = () => {
-    return Number((igv_total.value - (igv_discount_global.value)).toFixed(5));
+    return Number((igv_total.value - (igv_discount_general.value)).toFixed(5));
 }
 
 const getSubTotalSale = () => {
-    return Number((sale_subtotal.value - (discount_global.value ?? 0)).toFixed(5));
+    return Number((sale_subtotal.value - (discount_global_general.value ?? 0)).toFixed(5));
 }
 
 const getTotalSales = () => {
     return Number(((sale_total.value + icbper_total.value + isc_total.value + total_percepcion.value) - 
-    (discount_global.value + igv_discount_global.value + total_retencion.value + total_detracion.value)).toFixed(5));
+    (discount_global_general.value + igv_discount_general.value + total_retencion.value + total_detracion.value)).toFixed(5));
 }
 const getTotalCalc = () => {
-    return Number(((sale_total.value + icbper_total.value + isc_total.value) - (discount_global.value + igv_discount_global.value)).toFixed(5));
+    return Number(((sale_total.value + icbper_total.value + isc_total.value) - (discount_global_general.value + igv_discount_general.value)).toFixed(5));
 }
 const sumDetails = () => {
 
@@ -818,11 +856,20 @@ const sumDetails = () => {
 
     total_payments.value = Number((sale_payments.value.reduce((sum:number,sale_payment) => sum + sale_payment.amount,0)).toFixed(2));
 
+    discount_global_general.value = 0;
     igv_discount_general.value = 0;
     igv_discount_global.value = 0;
     if(discount_global.value > 0){
+        discount_global_general.value += discount_global.value; 
         igv_discount_global.value = discount_global.value*0.18;
         igv_discount_general.value += igv_discount_global.value;
+    }
+
+    total_anticipos.value =  Number(sales_anticipos.value.reduce((sum:number,sal_antic:any) => sum + Number(sal_antic.subtotal),0).toFixed(2));
+
+    if(total_anticipos.value > 0){
+        discount_global_general.value += total_anticipos.value;
+        igv_discount_general.value +=  Number((total_anticipos.value*0.18).toFixed(2));
     }
 
     sale_total.value = Number((igv_total.value + sale_subtotal.value).toFixed(5));
@@ -953,12 +1000,52 @@ const removePayment = (index:number) => {
 }
 
 const searchAnticipo = async() => {
-
+    try {
+        const res: AxiosResponse<any> = await HttpClient.get("sales/search_anticipo/"+n_comprobante_anticipo.value);
+        console.log(res);
+        if(res.data.code == 403){
+            (Swal as TVueSwalInstance).fire(
+                "Upps!",
+                res.data.message,
+                "warning",
+            );
+            n_comprobante_anticipo.value = "";
+        }else{
+            sale_anticipo.value = res.data.sale;
+            (Swal as TVueSwalInstance).fire(
+                "Genial!",
+                "Se ha encontrado la venta #"+sale_anticipo.value.id,
+                "success",
+            );
+            // sumDetails();
+        }
+    } catch (e: any) {
+        console.log(e);
+        if(e.response?.data){
+            (Swal as TVueSwalInstance).fire(
+                "Upps!",
+                e.response?.data.message,
+                "error",
+            );
+            return;
+        }
+    }
 }
+
+const addAnticipo = () => {
+    sales_anticipos.value.push(sale_anticipo.value);
+    resetAnticipo();
+    sumDetails();
+}
+
 const resetAnticipo = () => {
-
+    sale_anticipo.value = null;
+    n_comprobante_anticipo.value = "";
 } 
-
+const removeAnticipo = (index:number) => {
+    sales_anticipos.value.splice(index,1);
+    sumDetails();
+}
 onMounted(() => {
     config();
 })

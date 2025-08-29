@@ -218,6 +218,16 @@ const comercialRoutes = [
     },
     component: () => import("@/views/sale/edit.vue"),
   },
+  {
+    path: "/sale/nota/:id",
+    name: "sale.nota",
+    meta: {
+      title: setTitle("Nota Debito/Credito"),
+      authRequired: true,
+      permission: 'nota_electronica',
+    },
+    component: () => import("@/views/sale/nota.vue"),
+  },
 ];
 
 export const allRoute = [

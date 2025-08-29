@@ -87,6 +87,7 @@ export type Sale = {
     created_at_format:string,
     sale_details: SaleDetail[],
     payments: SalePayment[],
+    sales_anticipos:any[],
     // 
     serie:string,
     retencion_igv:number,
